@@ -1,0 +1,38 @@
+{
+  "action": {
+    "default_icon": {
+      "128": "images/icon128.png",
+      "16": "images/icon16.png",
+      "48": "images/icon48.png"
+    },
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "js": [
+        "filters/english_filter.js",
+        "filters/cebuano_filter.js",
+        "filters/tagalog_filter.js",
+        "filters/language_detector.js",
+        "filters/filter_manager.js",
+        "content.js"
+      ],
+      "matches": ["\u003Call_urls>"]
+    }
+  ],
+  "description": "Filters inappropriate text content in English, Cebuano, and Tagalog",
+  "host_permissions": ["\u003Call_urls>"],
+  "icons": {
+    "128": "images/icon128.png",
+    "16": "images/icon16.png",
+    "48": "images/icon48.png"
+  },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnE7W5ucdDIeP/OkzdNJUrsqn7asC0jqO2VmEogyM9MXqwM1B4uI5SfYMZM1v6bAoEd3w8NA61egX7xg3SytNZDgP2/iaFB0m3dXmQ3zbYZNhOpM8y0OXawIogDvCo35wrmkBTO+f1/+MjKkstvqEmYy/F9X6ahudxVjzJZ5GY8dO7gYF5aYZW/rY3y+/bUKjroSttqGcjiW1TiarspHTW24zDTgn+9Z2IIbAK3yq4s60nKClK/GdCYfEV81gZk/59uN4QN6zMVROr+pW5c49cuyXpvgUG1CbPf2WoxDeQZJ0geOO+QUE669RyXuIEKddgDN25+SSFcKVpFzfowI3GQIDAQAB",
+  "manifest_version": 3,
+  "name": "Multilingual Content Filter",
+  "permissions": ["storage", "activeTab"],
+  "version": "1.0"
+}

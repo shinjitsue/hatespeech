@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Content Filter Settings</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Content Filter</h1>
+
+      <div class="control-group">
+        <label class="toggle-switch">
+          <input type="checkbox" id="enableFilter" />
+          <span class="toggle-slider"></span>
+        </label>
+        <span id="statusText">Filter Enabled</span>
+      </div>
+
+      <div class="section">
+        <h2>Languages</h2>
+        <div class="language-option">
+          <input type="checkbox" id="englishFilter" checked />
+          <label for="englishFilter">English</label>
+        </div>
+        <div class="language-option">
+          <input type="checkbox" id="cebuanoFilter" />
+          <label for="cebuanoFilter">Cebuano</label>
+        </div>
+        <div class="language-option">
+          <input type="checkbox" id="tagalogFilter" />
+          <label for="tagalogFilter">Tagalog</label>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Filter Strength</h2>
+        <select id="filterStrength">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+
+      <div class="section">
+        <h2>Filter Style</h2>
+        <select id="filterStyle">
+          <option value="asterisk" selected>
+            Replace with asterisks (*****)
+          </option>
+          <option value="blur">Blur text</option>
+        </select>
+      </div>
+
+      <div class="section">
+        <h2>Custom Lists</h2>
+        <div class="custom-list">
+          <label for="customBlacklist"
+            >Blacklist (Additional words to block):</label
+          >
+          <textarea
+            id="customBlacklist"
+            placeholder="Enter words separated by commas"
+          ></textarea>
+        </div>
+        <div class="custom-list">
+          <label for="customWhitelist">Whitelist (Words to never block):</label>
+          <textarea
+            id="customWhitelist"
+            placeholder="Enter words separated by commas"
+          ></textarea>
+        </div>
+      </div>
+
+      <button id="saveSettings">Save Settings</button>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>
