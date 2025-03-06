@@ -39,38 +39,14 @@ class EnglishFilter {
     this.filterRegex = new RegExp(pattern, "gi");
   }
 
-  // Modified method to return an object with the filtered text and positions of profane words
-  filterText(text, blurMode = false) {
-    if (!text) return blurMode ? { text: "", profaneWords: [] } : "";
+  filterText(text) {
+    if (!text) return text;
 
-    if (!blurMode) {
-      // Original asterisk replacement behavior
-      return text.replace(this.filterRegex, (match) =>
-        "*".repeat(match.length)
-      );
-    } else {
-      // For blur mode, return original text but track profane word positions
-      const profaneWords = [];
-      // Create a new instance of the regex for this search
-      // (since regex with the 'g' flag maintains state between executions)
-      const regex = new RegExp(this.filterRegex);
-      let match;
-      while ((match = regex.exec(text)) !== null) {
-        profaneWords.push({
-          word: match[0],
-          startIndex: match.index,
-          endIndex: match.index + match[0].length,
-        });
-      }
-
-      return {
-        text: text,
-        profaneWords: profaneWords,
-      };
-    }
+    // Replace matched words with asterisks
+    return text.replace(this.filterRegex, (match) => "*".repeat(match.length));
   }
 
-  // Existing method remains unchanged
+  // Check if text contains profanity
   containsProfanity(text) {
     if (!text) return false;
     return this.filterRegex.test(text);

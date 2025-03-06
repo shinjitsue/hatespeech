@@ -125,123 +125,23 @@ function initializeContentFilter() {
   function filterTextNode(node, languages) {
     if (node.nodeValue && node.nodeValue.trim() !== "") {
       const originalText = node.nodeValue;
+      let filteredText = originalText;
 
-      // Get settings to check if blur mode is enabled
-      chrome.storage.local.get(["filterStyle"], function (data) {
-        const useBlur = data.filterStyle === "blur";
+      if (languages.english) {
+        filteredText = englishFilter.filterText(filteredText);
+      }
+      if (languages.cebuano) {
+        filteredText = cebuanoFilter.filterText(filteredText);
+      }
+      if (languages.tagalog) {
+        filteredText = tagalogFilter.filterText(filteredText);
+      }
 
-        if (useBlur) {
-          // First check if this node already has blurred content
-          if (
-            node.parentNode &&
-            node.parentNode.classList &&
-            node.parentNode.classList.contains("profanity-filter-container")
-          ) {
-            return; // Skip already processed nodes
-          }
-
-          // Get profane word positions from each enabled filter
-          let profaneWords = [];
-
-          if (languages.english) {
-            const result = englishFilter.filterText(originalText, true);
-            profaneWords = profaneWords.concat(result.profaneWords);
-          }
-
-          if (languages.cebuano) {
-            const result = cebuanoFilter.filterText(originalText, true);
-            profaneWords = profaneWords.concat(result.profaneWords);
-          }
-
-          if (languages.tagalog) {
-            const result = tagalogFilter.filterText(originalText, true);
-            profaneWords = profaneWords.concat(result.profaneWords);
-          }
-
-          if (profaneWords.length > 0) {
-            // Create a span container to replace the text node
-            const container = document.createElement("span");
-            container.className = "profanity-filter-container";
-
-            let lastIndex = 0;
-
-            // Sort profane words by start index
-            profaneWords.sort((a, b) => a.startIndex - b.startIndex);
-
-            // Create spans for normal and blurred text
-            profaneWords.forEach((word) => {
-              // Add normal text before profanity
-              if (word.startIndex > lastIndex) {
-                const normalText = document.createTextNode(
-                  originalText.substring(lastIndex, word.startIndex)
-                );
-                container.appendChild(normalText);
-              }
-
-              // Add blurred text
-              const profaneSpan = document.createElement("span");
-              profaneSpan.className = "profanity-blurred";
-              profaneSpan.style.filter = "blur(4px)";
-              profaneSpan.textContent = originalText.substring(
-                word.startIndex,
-                word.endIndex
-              );
-              container.appendChild(profaneSpan);
-
-              lastIndex = word.endIndex;
-            });
-
-            // Add remaining normal text
-            if (lastIndex < originalText.length) {
-              const normalText = document.createTextNode(
-                originalText.substring(lastIndex)
-              );
-              container.appendChild(normalText);
-            }
-
-            // Replace the original text node with our container
-            if (node.parentNode) {
-              node.parentNode.replaceChild(container, node);
-            }
-          }
-        } else {
-          // Use traditional asterisk filtering
-          let filteredText = originalText;
-
-          if (languages.english) {
-            filteredText = englishFilter.filterText(filteredText);
-          }
-          if (languages.cebuano) {
-            filteredText = cebuanoFilter.filterText(filteredText);
-          }
-          if (languages.tagalog) {
-            filteredText = tagalogFilter.filterText(filteredText);
-          }
-
-          if (originalText !== filteredText) {
-            node.nodeValue = filteredText;
-          }
-        }
-      });
+      if (originalText !== filteredText) {
+        node.nodeValue = filteredText;
+      }
     }
   }
-
-  function injectBlurStyles() {
-    const style = document.createElement("style");
-    style.textContent = `
-        .profanity-blurred {
-          filter: blur(4px);
-          transition: filter 0.2s;
-        }
-        .profanity-blurred:hover {
-          filter: blur(0);
-        }
-      `;
-    document.head.appendChild(style);
-  }
-
-  // Call this function when the content script initializes
-  injectBlurStyles();
 
   // Filter text inputs and textareas
   function filterInputs() {

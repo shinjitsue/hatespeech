@@ -39,28 +39,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Add to the save settings function in popup.js
-  const filterStyle = document.getElementById("filterStyle").value;
-
-  const settings = {
-    enabled: enableFilter.checked,
-    filterLanguages: {
-      english: englishFilter.checked,
-      cebuano: cebuanoFilter.checked,
-      tagalog: tagalogFilter.checked,
-    },
-    filterStrength: filterStrength.value,
-    filterStyle: filterStyle, // Add this line
-    customBlacklist: customBlacklist.value
-      .split(",")
-      .map((word) => word.trim())
-      .filter((word) => word),
-    customWhitelist: customWhitelist.value
-      .split(",")
-      .map((word) => word.trim())
-      .filter((word) => word),
-  };
-
   // Toggle filter status text
   enableFilter.addEventListener("change", function () {
     statusText.textContent = this.checked
