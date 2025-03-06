@@ -53,23 +53,67 @@ function initializeContentFilter() {
 
       if (!enabled) return; // Exit if filtering is disabled
 
-      // Create a text node walker to find all text nodes
-      const walker = document.createTreeWalker(
-        document.body,
-        NodeFilter.SHOW_TEXT,
-        null,
-        false
-      );
-
-      // Process existing text nodes
-      let node;
-      while ((node = walker.nextNode())) {
-        filterTextNode(node, languages);
+      // Skip processing if all filters are disabled
+      if (!languages.english && !languages.cebuano && !languages.tagalog) {
+        return;
       }
 
-      // Set up mutation observer to watch for DOM changes
+      // Use a more efficient approach for large DOMs
+      const processNodesInChunks = (rootNode) => {
+        const walker = document.createTreeWalker(
+          rootNode,
+          NodeFilter.SHOW_TEXT,
+          {
+            acceptNode: (node) => {
+              // Skip hidden elements and script/style content
+              const parent = node.parentNode;
+              if (!parent) return NodeFilter.FILTER_REJECT;
+
+              if (
+                parent.nodeName === "SCRIPT" ||
+                parent.nodeName === "STYLE" ||
+                parent.nodeName === "NOSCRIPT"
+              ) {
+                return NodeFilter.FILTER_REJECT;
+              }
+
+              // Skip empty text nodes
+              if (!node.nodeValue || node.nodeValue.trim() === "") {
+                return NodeFilter.FILTER_REJECT;
+              }
+
+              return NodeFilter.FILTER_ACCEPT;
+            },
+          },
+          false
+        );
+
+        const textNodes = [];
+        let node;
+
+        // Collect nodes first (faster than processing during walk)
+        while ((node = walker.nextNode())) {
+          textNodes.push(node);
+        }
+
+        // Process in batches of 500 nodes
+        const BATCH_SIZE = 500;
+
+        for (let i = 0; i < textNodes.length; i += BATCH_SIZE) {
+          const batch = textNodes.slice(i, i + BATCH_SIZE);
+
+          setTimeout(() => {
+            batch.forEach((node) => filterTextNode(node, languages));
+          }, 0);
+        }
+      };
+
+      // Process the initial DOM
+      processNodesInChunks(document.body);
+
+      // Set up optimized mutation observer
       const observer = new MutationObserver((mutations) => {
-        // Re-check settings for each mutation batch
+        // Re-check settings occasionally
         chrome.storage.local.get(
           ["enabled", "filterLanguages"],
           function (data) {
@@ -80,39 +124,42 @@ function initializeContentFilter() {
               tagalog: false,
             };
 
-            if (!enabled) return; // Skip processing if disabled
+            if (!enabled) return;
+
+            // Group added nodes for batch processing
+            const addedNodes = [];
+            const changedNodes = [];
 
             mutations.forEach((mutation) => {
               // For added nodes
               mutation.addedNodes.forEach((node) => {
                 if (node.nodeType === Node.ELEMENT_NODE) {
-                  // Create a tree walker for this element
-                  const elementWalker = document.createTreeWalker(
-                    node,
-                    NodeFilter.SHOW_TEXT,
-                    null,
-                    false
-                  );
-
-                  let textNode;
-                  while ((textNode = elementWalker.nextNode())) {
-                    filterTextNode(textNode, languages);
-                  }
+                  addedNodes.push(node);
                 } else if (node.nodeType === Node.TEXT_NODE) {
-                  filterTextNode(node, languages);
+                  changedNodes.push(node);
                 }
               });
 
               // For character data changes
               if (mutation.type === "characterData") {
-                filterTextNode(mutation.target, languages);
+                changedNodes.push(mutation.target);
               }
+            });
+
+            // Process added elements in batch
+            addedNodes.forEach((node) => {
+              processNodesInChunks(node);
+            });
+
+            // Process changed text nodes
+            changedNodes.forEach((node) => {
+              filterTextNode(node, languages);
             });
           }
         );
       });
 
-      // Start observing
+      // Start observing with optimized configuration
       observer.observe(document.body, {
         childList: true,
         subtree: true,
@@ -123,10 +170,40 @@ function initializeContentFilter() {
 
   // Function to filter individual text nodes
   function filterTextNode(node, languages) {
-    if (node.nodeValue && node.nodeValue.trim() !== "") {
-      const originalText = node.nodeValue;
-      let filteredText = originalText;
+    // Skip empty nodes or script/style content
+    if (
+      !node.nodeValue ||
+      node.nodeValue.trim() === "" ||
+      (node.parentNode &&
+        (node.parentNode.nodeName === "SCRIPT" ||
+          node.parentNode.nodeName === "STYLE"))
+    ) {
+      return;
+    }
 
+    const originalText = node.nodeValue;
+    let filteredText = originalText;
+
+    // Check for profanity first before applying filters (fast early return)
+    let hasProfanity = false;
+
+    if (languages.english && englishFilter.containsProfanity(filteredText)) {
+      hasProfanity = true;
+    } else if (
+      languages.cebuano &&
+      cebuanoFilter.containsProfanity(filteredText)
+    ) {
+      hasProfanity = true;
+    } else if (
+      languages.tagalog &&
+      tagalogFilter.containsProfanity(filteredText)
+    ) {
+      hasProfanity = true;
+    }
+
+    // Only apply filters if profanity is detected
+    if (hasProfanity) {
+      // Apply filters in order of likelihood for better performance
       if (languages.english) {
         filteredText = englishFilter.filterText(filteredText);
       }
@@ -137,6 +214,7 @@ function initializeContentFilter() {
         filteredText = tagalogFilter.filterText(filteredText);
       }
 
+      // Only update DOM if text actually changed
       if (originalText !== filteredText) {
         node.nodeValue = filteredText;
       }

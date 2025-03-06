@@ -1,6 +1,5 @@
 class EnglishFilter {
   constructor() {
-    // Existing code remains unchanged
     this.profanityList = [
       // Common profane words
       "fuck",
@@ -19,13 +18,16 @@ class EnglishFilter {
       // Add more variations
     };
 
+    // Pre-compile the regex pattern only once
     this.buildRegexPattern();
+
+    // Prepare a word map for faster replacements
+    this.wordReplacementMap = new Map();
+    this.buildWordReplacementMap();
   }
 
   buildRegexPattern() {
-    // Existing code with escape characters added
     let allTerms = [...this.profanityList];
-
     for (const key in this.variations) {
       allTerms = [...allTerms, ...this.variations[key]];
     }
@@ -35,20 +37,48 @@ class EnglishFilter {
       term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
     );
 
+    // Use word boundaries for more accurate matching
     const pattern = escapedTerms.map((term) => `\\b${term}\\b`).join("|");
     this.filterRegex = new RegExp(pattern, "gi");
   }
 
-  filterText(text) {
-    if (!text) return text;
+  buildWordReplacementMap() {
+    // Pre-compute asterisk replacements for all words
+    this.profanityList.forEach((word) => {
+      this.wordReplacementMap.set(word.toLowerCase(), "*".repeat(word.length));
+    });
 
-    // Replace matched words with asterisks
-    return text.replace(this.filterRegex, (match) => "*".repeat(match.length));
+    // Add variations
+    for (const [base, variants] of Object.entries(this.variations)) {
+      variants.forEach((variant) => {
+        const cleanVariant = variant.replace(/\\|\*/g, "");
+        this.wordReplacementMap.set(
+          cleanVariant.toLowerCase(),
+          "*".repeat(cleanVariant.length)
+        );
+      });
+    }
   }
 
-  // Check if text contains profanity
+  filterText(text) {
+    if (!text || text.trim() === "") return text;
+
+    // Reset regex lastIndex to avoid inconsistent matching across calls
+    this.filterRegex.lastIndex = 0;
+
+    // Use the cached replacement map when possible for faster replacement
+    return text.replace(this.filterRegex, (match) => {
+      const lowerMatch = match.toLowerCase();
+      if (this.wordReplacementMap.has(lowerMatch)) {
+        return this.wordReplacementMap.get(lowerMatch);
+      }
+      return "*".repeat(match.length);
+    });
+  }
+
   containsProfanity(text) {
     if (!text) return false;
+    this.filterRegex.lastIndex = 0;
     return this.filterRegex.test(text);
   }
 }
