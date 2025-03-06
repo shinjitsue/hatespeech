@@ -4,8 +4,8 @@ chrome.runtime.onInstalled.addListener(() => {
     enabled: true,
     filterLanguages: {
       english: true,
-      cebuano: false,
-      tagalog: false,
+      cebuano: true,
+      tagalog: true,
     },
     filterStrength: "medium", // Options: 'low', 'medium', 'high'
     customBlacklist: [],

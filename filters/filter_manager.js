@@ -5,8 +5,8 @@ class FilterManager {
     this.filterStrength = "medium";
     this.enabledLanguages = {
       english: true,
-      cebuano: false,
-      tagalog: false,
+      cebuano: true,
+      tagalog: true,
     };
 
     // Precompiled regex patterns for custom lists
